@@ -15,7 +15,7 @@ Este proyecto tiene como objetivo desarrollar dos microservicios REST en **Pytho
 | ---------------------------------- | ---------------------------------------------------------------------- |
 | Python 3.13.2                         | Lenguaje principal para el desarrollo de los microservicios.           |
 | http.server / socketserver         | Para implementar un servidor HTTP básico en Python.                    |
-| sqlite3 / psycopg2 (según DB real) | Para manejar la conexión y ejecución de SQL directamente desde Python. |
+| mysql-connector-python | Para manejar la conexión y ejecución de SQL directamente desde Python con MySQL. |
 | unittest                           | Para implementar pruebas unitarias.                                    |
 | PEP8                               | Guía de estilo usada para mantener el código limpio y consistente.     |
 
@@ -33,7 +33,7 @@ real_estate_api/
 │   └── utils.py          # Funciones de utilidad (parseo, validaciones)
 │
 ├── database/
-│   ├── connection.py     # Conexión directa a base de datos
+│   ├── connection.py     # Conexión directa a base de datos 
 │   └── schema_extension.sql # Script SQL con modelo de "me gusta" y explicación
 │
 ├── docs/
