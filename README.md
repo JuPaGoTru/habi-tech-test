@@ -105,7 +105,7 @@ Este servicio **no se implementará** como código funcional. En su lugar, se en
 1. Clona el repositorio:
 
    ```bash
-   git clone https://github.com/JuPaGoTru/habi-tech-test
+   git clone https://github.com/JuPaGoTru/habi-tech-test.git
    cd real_estate_api
    ```
 
