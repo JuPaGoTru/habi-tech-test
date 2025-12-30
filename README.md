@@ -163,3 +163,64 @@ Se incluye el SQL y diagrama en `database/schema_extension.sql` y `docs/like_mod
 ## 🧾 Licencia
 
 Este proyecto es parte de una prueba técnica con fines de evaluación profesional.
+
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant API as FastAPI
+    participant DB as DAS_DB (Postgres)
+    participant AF as Airflow API
+    participant Sch as Airflow Scheduler
+    participant W as Airflow Worker
+    participant TDB as Target DB
+    participant FS as /shared_files
+
+    Note over U,FS: Paso 1: Encolar Reporte
+    U->>API: POST /reports/1/execute?async=true
+    API->>DB: INSERT INTO request (status='PROCESSING')
+    DB-->>API: request_id (UUID)
+    API->>DB: INSERT INTO request_status_log
+    API->>AF: POST /dags/execute_report/dagRuns
+    Note right of AF: {conf: {request_id, source_alias,<br/>sql_query, file_format}}
+    AF-->>API: {dag_run_id, state}
+    API-->>U: 200 OK {request_id, status="QUEUED"}
+
+    Note over U,FS: Paso 2: Polling de Estado
+    U->>API: GET /requests/{request_id}/status
+    API->>DB: SELECT request WHERE id=...
+    DB-->>API: {status: "PROCESSING", file_path: null}
+    API-->>U: 200 OK {status: "PROCESSING"}
+
+    Note over U,FS: Paso 3: Ejecución en Airflow (background)
+    Sch->>W: Trigger DAG execute_report
+    activate W
+    
+    W->>W: Task: execute_query
+    W->>TDB: Execute SQL query
+    TDB-->>W: Rows (list of dicts)
+    
+    W->>W: Task: save_result
+    W->>FS: Write /shared_files/{request_id}.xlsx
+    FS-->>W: File created
+    
+    W->>W: Task: update_request_status
+    W->>DB: UPDATE request SET status='COMPLETED'
+    W->>DB: INSERT INTO result (file_path, file_size)
+    W->>DB: INSERT INTO request_status_log
+    deactivate W
+
+    Note over U,FS: Paso 4: Consultar Estado (completado)
+    U->>API: GET /requests/{request_id}/status
+    API->>DB: SELECT request JOIN result
+    DB-->>API: {status: "COMPLETED", file_path: "..."}
+    API-->>U: 200 OK {status: "COMPLETED", file_path}
+
+    Note over U,FS: Paso 5: Descargar Archivo
+    U->>API: GET /requests/{request_id}/download
+    API->>DB: SELECT result WHERE request_id=...
+    DB-->>API: file_path
+    API->>FS: Read file
+    FS-->>API: File content
+    API-->>U: 200 OK (FileResponse)
+```
